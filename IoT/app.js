@@ -1,3 +1,5 @@
+const incidents = require('./models/incidents');
+
 var express = require('express'),
     app = express(),
     bodyParser = require("body-parser"),
@@ -21,23 +23,25 @@ app.get("/", function (req, res) {
     res.render("index");
 });
 
-app.get("/incidents", function (req, res) {
+app.get("/incidents", async function (req, res) {
     var userID = req.query.userid;
-    console.log(userID);
-    User.find({ 'guardian': userID }, function (err, user) {
-        if (err) {
-            console.log(err);
-            res.render("index");
-        } else {
-            if (user) {
-                res.send(user);
-            }else{
-                res.render("index");
-            }
+    const users_found = await User.find({ 'guardian': userID });
 
-       
-        }
-    });
+    device_list = [];
+    for(user of users_found){
+        const device =  await Device.findOne({"user_id": user.id});
+        device_list.push(device);
+    }
+    // res.send(device_list);
+
+    incidents_list = [];
+    for(device of device_list){
+        const incidents_now =  await Incident.find({"device_id": device.device_id});
+        console.log(incidents_now);
+        incidents_list.push(...incidents_now);
+    }
+    console.log(incidents_list);
+    res.send(incidents_list);
 
 });
 
