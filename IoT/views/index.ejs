@@ -9,7 +9,19 @@
     <%- include("partials/nav")  %>
 
     <div class="container">
-        <h1>Home Page</h1>
+        <h1 class="text-center">Home Page</h1>
+
+        <form class="form-inline" action="/incidents" method="GET">
+            <div class="form-group mx-sm-3 mb-2">
+                <label for="userid" style="margin-right: 2em;">Input your Guardian User ID</label>
+                <input type="text" class="form-control" id="userid" name="userid" placeholder="123">
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Confirm identity</button>
+        </form>
+
+
+
+
     </div>
 
     <%- include("partials/footer")  %>

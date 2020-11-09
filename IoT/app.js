@@ -11,7 +11,7 @@ mongoose.connect('mongodb://localhost:27017/iot_anger', { useNewUrlParser: true,
 
 seedDb();
 
-app.use(express.static(__dirname+ "/public"));
+app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -19,6 +19,26 @@ app.set("view engine", "ejs");
 
 app.get("/", function (req, res) {
     res.render("index");
+});
+
+app.get("/incidents", function (req, res) {
+    var userID = req.query.userid;
+    console.log(userID);
+    User.find({ 'guardian': userID }, function (err, user) {
+        if (err) {
+            console.log(err);
+            res.render("index");
+        } else {
+            if (user) {
+                res.send(user);
+            }else{
+                res.render("index");
+            }
+
+       
+        }
+    });
+
 });
 
 //start server
