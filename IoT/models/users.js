@@ -5,12 +5,7 @@ var userSchema = new mongoose.Schema({
     name: String,
     mobile: String,
     email: String,
-    guardian: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
-        }
-    ]
+    guardian: [Number]
 });
 
 module.exports = mongoose.model("User", userSchema);
