@@ -1,0 +1,41 @@
+<%- include("partials/header")  %>
+<title>Home Page</title>
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <%- include("partials/nav")  %>
+
+    <div class="container">
+        <h1 class="text-center">Home Page</h1>
+
+        <table class="table table-dark table-striped">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Device ID</th>
+                <th scope="col">Incident Time</th>
+                <th scope="col">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+                <%var count =0; for(const incident of incidents){ %>
+                    <tr>
+                        <th scope="row"><%= count++ %> </th>
+                        <td><%=incident.device_id%></td>
+                        <td><%=incident.incident_time %></td>
+                        <td><%=incident.incident_type %></td>
+                      </tr>
+            
+                <% } %>
+ 
+       
+            </tbody>
+          </table>
+
+
+    </div>
+
+    <%- include("partials/footer")  %>

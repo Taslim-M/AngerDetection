@@ -41,7 +41,8 @@ app.get("/incidents", async function (req, res) {
         incidents_list.push(...incidents_now);
     }
     console.log(incidents_list);
-    res.send(incidents_list);
+    // res.send(incidents_list);
+    res.render("incidents",{incidents: incidents_list})
 
 });
 
