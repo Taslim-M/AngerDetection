@@ -2,7 +2,7 @@ var mongoose = require("mongoose");
 
 var User = require("./models/users");
 var Device = require("./models/devices");
-
+var Incident = require("./models/incidents");
 var seed_user = [
     {
         id: 1,
@@ -40,11 +40,38 @@ var seed_device = [
     }
 ];
 
+var d = new Date();
+d.setHours(d.getHours() - 2);
+
+var seed_incident = [
+    {
+        device_id: 322,
+        incident_time: d,
+        incident_type: "Anger"
+    },
+    {
+        device_id: 322,
+        incident_time: Date.now(),
+        incident_type: "Position"
+    },
+    {
+        device_id: 422,
+        incident_time: Date.now(),
+        incident_type: "Anger"
+    },
+    {
+        device_id: 422,
+        incident_time: d,
+        incident_type: "Position"
+    },
+];
+
 
 async function seedDB() {
     try {
         await User.remove({});
         await Device.remove({});
+        await Incident.remove({});
         for (const seed of seed_user) {
             let user = await User.create(seed);
             user.save();
@@ -52,6 +79,10 @@ async function seedDB() {
         for (const seed of seed_device) {
             let device = await Device.create(seed);
             device.save();
+        }
+        for (const seed of seed_incident) {
+            let incident = await Incident.create(seed);
+            incident.save();
         }
     } catch (err) {
         console.log(err);
