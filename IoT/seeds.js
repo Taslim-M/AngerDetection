@@ -5,21 +5,21 @@ var Device = require("./models/devices");
 var Incident = require("./models/incidents");
 var seed_user = [
     {
-
+        id: 1,
         name: "John Cena",
         mobile: "0506999999",
         email: "johncena@google.com",
         guardian: []
     },
     {
-
+        id: 2,
         name: "Kelly Ma",
         mobile: "0502229999",
         email: "Kelly@google.com",
         guardian: [1]
     },
     {
-
+        id: 3,
         name: "Mariam Hossain",
         mobile: "0501119999",
         email: "Mariam@google.com",

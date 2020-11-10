@@ -22,10 +22,6 @@ app.set("view engine", "ejs");
 app.get("/", function (req, res) {
     res.render("index");
 });
-app.get("/add-user", function (req, res) {
-    res.render("add_user");
-});
-
 
 app.get("/incidents", async function (req, res) {
     var userID = req.query.userid;
