@@ -1,0 +1,47 @@
+<%- include("partials/header")  %>
+<title>Add User Form</title>
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <%- include("partials/nav")  %>
+    <% if(locals.msg){%> 
+        <div class="alert alert-info" role="alert">
+            <%= locals.msg %> 
+          </div>
+    <%} %> 
+    <div class="container">
+        <form method="POST" action="/add_user">
+            <div class="form-group">
+                <label for="user_id">User ID</label>
+                <input type="number" class="form-control" id="user_id" name="user_id" placeholder="1234" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="Mary Ahmed" required>
+            </div>
+            <div class="form-group">
+                <label for="mobile">Mobile Number</label>
+                <input type="text" class="form-control" id="mobile" name="mobile" placeholder="050-1122666" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="mary@google.com"
+                    aria-describedby="emailHelp">
+            </div>
+            <div class="form-group">
+                <label for="guardian">Guardian ID(s)</label>
+                <input type="text" class="form-control" id="guardian" name="guardian" placeholder="2,56" required>
+                <small class="form-text text-muted">Input all guardian IDs seperated by comma.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+
+
+    </div>
+
+    <%- include("partials/footer")  %>
