@@ -1,0 +1,42 @@
+<%- include("partials/header")  %>
+<title>Add Device Form</title>
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <%- include("partials/nav")  %>
+    <% if(locals.msg){%>
+    <div class="alert alert-info" role="alert">
+        <%= locals.msg %>
+    </div>
+    <%} %>
+    <div class="container">
+        <h1 id="titleHeader">Add A New Device</h1>
+        <div class="container-fluid border border-info rounded" style="padding: 10px;">
+            <form method="POST" action="/add_device">
+                <div class="form-group">
+                    <label for="device_id">Device ID</label>
+                    <input type="number" class="form-control" id="device_id" name="device_id" placeholder="42156" required>
+                </div>
+                <div class="form-group">
+                    <label for="user_id">User ID</label>
+                    <input type="number" class="form-control" id="user_id" name="user_id" placeholder="1234" required>
+                </div>
+                <div class="form-group">
+                    <label for="live_stream_ip">Live Stream IP</label>
+                    <input type="text" class="form-control" id="live_stream_ip" name="live_stream_ip" placeholder="http://192.168.0.1:2020"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Device</button>
+            </form>
+        </div>
+
+
+
+
+    </div>
+
+    <%- include("partials/footer")  %>

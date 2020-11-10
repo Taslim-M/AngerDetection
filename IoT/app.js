@@ -36,7 +36,7 @@ app.post("/add_user", function (req, res) {
     for(num of guardian_str){
         guardian.push(Number(num));
     }
-    console.log(guardian);
+
     var user_to_add = {
         "id": user_id,
         "name":name,
@@ -44,7 +44,6 @@ app.post("/add_user", function (req, res) {
         "email": email,
         "guardian" : guardian
     }
-    console.log(user_to_add);
     User.create(user_to_add, function(err, new_user){
         if(err){
             console.log(err);
@@ -56,6 +55,31 @@ app.post("/add_user", function (req, res) {
     });
    
 });
+
+app.get("/add_device", function (req, res) {
+    res.render("add_device");
+});
+
+app.post("/add_device", function (req, res) {
+    var device_id = req.body.device_id;
+    var user_id = req.body.user_id;
+    var live_stream_ip = req.body.live_stream_ip;
+
+    var device_to_add = {
+        "device_id": device_id,
+        "user_id":user_id,
+        "live_stream_ip": live_stream_ip
+    }
+    Device.create(device_to_add, function(err, new_device){
+        if(err){
+            console.log(err);
+            res.render("add_device",{msg: "Sorry there was some error, try again"});
+        }else{
+            res.render("add_device", {msg:"SUCCESS! Thank you for adding device with ID: "+ new_device.device_id});
+        }
+    });
+});
+
 app.get("/incidents", async function (req, res) {
     var userID = req.query.userid;
     const users_found = await User.find({ 'guardian': userID });
