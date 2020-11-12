@@ -83,7 +83,15 @@
       </center>
 
       <script>
+        //!!! HYPER PARAMS TO MATCH WITH LIBROSA
         let SPECTROGRAM_WIDTH = 50;
+        let hopSize = 1024;
+        let melNumBands = 96;
+
+        //!!! FINAL 2D ARRAY TO CONVERT TO TF TENSOR
+        // Can safely access final array in stopMicRecordStream() function
+        let spectrogram = [];
+
 
 
         // global var to load essentia.js core instance
@@ -93,9 +101,9 @@
         let audioCtx;
         // buffer size microphone stream (bufferSize is high in order to make PitchYinProbabilistic algo to work)
         let bufferSize = 2048;
-        let hopSize = 1024;
-        let melNumBands = 96;
-        let spectrogram = [];
+
+
+
 
         try {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
