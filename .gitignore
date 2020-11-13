@@ -10,6 +10,7 @@
 
 #jupyter
 .ipynb_checkpoints
+/Deep_Learning/.ipynb_checkpoints
 
 # Package Files #
 *.jar
@@ -25,5 +26,5 @@ hs_err_pid*
 
 #specific folders
 /cremad/
-/data/
-/IoT/node_modules
+/Deep_Learning/data/
+/Web_Server/node_modules
