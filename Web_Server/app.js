@@ -15,6 +15,7 @@ seedDb();
 
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 app.set("view engine", "ejs");
 
 //Routes
@@ -101,6 +102,19 @@ app.get("/incidents", async function (req, res) {
     // res.send(incidents_list);
     res.render("incidents",{incidents: incidents_list})
 
+});
+
+//Add Incidents from Edge
+app.post("/add_incident", async function (req, res) {
+    var new_inc ={
+        device_id: req.body.device_id,
+        incident_time : Date.now(),
+        incident_type :  req.body.incident_type
+    }
+    let incident = await Incident.create(new_inc);
+    incident.save();
+    console.log("Added" + incident);
+    res.status(200).send(incident);
 });
 
 //start server
