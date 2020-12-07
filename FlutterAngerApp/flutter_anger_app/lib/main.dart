@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -9,8 +12,30 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'mqtt.dart';
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
 void main() {
   runApp(MyApp());
+  setupNotifs();
+}
+
+void setupNotifs() async {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+// initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
+  const AndroidInitializationSettings initializationSettingsAndroid =
+  AndroidInitializationSettings('res/drawable/app_icon');
+  final IOSInitializationSettings initializationSettingsIOS =
+  IOSInitializationSettings(
+      onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+  final MacOSInitializationSettings initializationSettingsMacOS =
+  MacOSInitializationSettings();
+  final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+      macOS: initializationSettingsMacOS);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 }
 
 class MyApp extends StatelessWidget {
@@ -60,6 +85,15 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  bool isDetectionEnabled = true;
+  MQTTClient cl;
+
+  void initState() {
+    super.initState();
+    // initialize MQTT
+    setUpMQTT();
+  }
+
 
   void _incrementCounter() {
     setState(() {
@@ -67,7 +101,42 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _disableNotifs() async {
+  void setUpMQTT() async {
+    // create an MQTT client.
+    cl = new MQTTClient('10.0.2.2', '1883', _onMQTTMessage);
+    await cl.connect();
+    cl.subscribe('anger/test', null);
+  }
+
+  void _onMQTTMessage(String topic, String payload)  {
+    print('rcvd Message'+topic+':'+payload);
+    //
+    // const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    // AndroidNotificationDetails(
+    //     '1', 'your channel name', 'your channel description',
+    //     importance: Importance.max,
+    //     priority: Priority.high,
+    //     showWhen: false);
+    // const NotificationDetails platformChannelSpecifics =
+    // NotificationDetails(android: androidPlatformChannelSpecifics);
+    // await flutterLocalNotificationsPlugin.show(
+    //     0, 'plain title', 'plain body', platformChannelSpecifics,
+    //     payload: 'item x');
+    if (topic == "anger/test"){
+      Fluttertoast.showToast(
+          msg: payload,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
+
+  }
+
+  void _disableNotifs(bool newValue) async {
     print("disabled Notifs!");
     http.Response response = await http.post(
       'http://10.0.2.2:3000/flutter_disable_notifs',
@@ -80,6 +149,17 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     print(response.statusCode);
+  }
+
+  void _showToast(BuildContext context, String text) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        action: SnackBarAction(
+            label: 'OK', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
   }
 
   @override
@@ -109,9 +189,11 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
             ),
-            RaisedButton(
-              onPressed: _disableNotifs,
-              child: const Text('Disable Detections', style: TextStyle(fontSize: 20)),
+            CheckboxListTile(
+              value: isDetectionEnabled,
+              title: Text("Detections Enabled"),
+              onChanged: _disableNotifs,
+              controlAffinity: ListTileControlAffinity.leading,
             ),
           ],
         ),
@@ -123,4 +205,10 @@ class _MyHomePageState extends State<MyHomePage> {
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+}
+
+Future onDidReceiveLocalNotification(
+    int id, String title, String body, String payload) async {
+  // display a dialog with the notification details, tap ok to go to another page
+
 }
