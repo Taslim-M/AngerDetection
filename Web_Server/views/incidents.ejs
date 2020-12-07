@@ -1,4 +1,6 @@
 <%- include("partials/header")  %>
+<!-- Font Awesome For Icons  -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <title>Home Page</title>
 
 </head>
@@ -18,7 +20,36 @@
       </div>
       <button type="submit" class="btn btn-primary mb-2">Confirm identity</button>
     </form>
+    <!-- Users Table with Devices  -->
+    <table class="table table-striped">
+      <thead class="thead-light">
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">User Name</th>
+          <th scope="col">Phone Number</th>
+          <th scope="col">Device ID</th>
+          <th scope="col">Livestream</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%var count =0; for(const user of users){ %>
+        <tr>
+          <th scope="row"><%= count+1 %> </th>
+          <td><%=user.name%></td>
+          <td><a href="tel:<%=user.mobile%> "> <i class="fa fa-phone-square" aria-hidden="true"></i></a> <%=user.mobile %></td>
+          <td> <%=devices[count].device_id %></td>
+          <td><a href="<%=devices[count].live_stream_ip%>" class="btn btn-warning" target="_">Open</a></td>
+          <% count++ %>
+        </tr>
 
+        <% } %>
+
+
+      </tbody>
+    </table>
+
+    <hr><br>
+    <!-- Incidents Table per Device  -->
     <table class="table table-dark table-striped">
       <thead class="thead-light">
         <tr>
@@ -31,7 +62,7 @@
       <tbody>
         <%var count =0; for(const incident of incidents){ %>
         <tr>
-          <th scope="row"><%= count++ %> </th>
+          <th scope="row"><%= ++count %> </th>
           <td><%=incident.device_id%></td>
           <td><%=incident.incident_time %></td>
           <td><%=incident.incident_type %></td>
