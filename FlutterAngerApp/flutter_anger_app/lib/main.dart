@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -14,8 +16,8 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
 
 void main() {
-  setupNotifs();
   runApp(MyApp());
+  setupNotifs();
 }
 
 void setupNotifs() async {
@@ -23,7 +25,7 @@ void setupNotifs() async {
   FlutterLocalNotificationsPlugin();
 // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
   const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('app_icon');
+  AndroidInitializationSettings('res/drawable/app_icon');
   final IOSInitializationSettings initializationSettingsIOS =
   IOSInitializationSettings(
       onDidReceiveLocalNotification: onDidReceiveLocalNotification);
@@ -83,6 +85,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  bool isDetectionEnabled = true;
   MQTTClient cl;
 
   void initState() {
@@ -105,23 +108,35 @@ class _MyHomePageState extends State<MyHomePage> {
     cl.subscribe('anger/test', null);
   }
 
-  void _onMQTTMessage(String topic, String payload) async {
+  void _onMQTTMessage(String topic, String payload)  {
     print('rcvd Message'+topic+':'+payload);
+    //
+    // const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    // AndroidNotificationDetails(
+    //     '1', 'your channel name', 'your channel description',
+    //     importance: Importance.max,
+    //     priority: Priority.high,
+    //     showWhen: false);
+    // const NotificationDetails platformChannelSpecifics =
+    // NotificationDetails(android: androidPlatformChannelSpecifics);
+    // await flutterLocalNotificationsPlugin.show(
+    //     0, 'plain title', 'plain body', platformChannelSpecifics,
+    //     payload: 'item x');
+    if (topic == "anger/test"){
+      Fluttertoast.showToast(
+          msg: payload,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
 
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
-        'your channel id', 'your channel name', 'your channel description',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: false);
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-        0, 'plain title', 'plain body', platformChannelSpecifics,
-        payload: 'item x');
-}
+  }
 
-  void _disableNotifs() async {
+  void _disableNotifs(bool newValue) async {
     print("disabled Notifs!");
     http.Response response = await http.post(
       'http://10.0.2.2:3000/flutter_disable_notifs',
@@ -134,6 +149,17 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     print(response.statusCode);
+  }
+
+  void _showToast(BuildContext context, String text) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        action: SnackBarAction(
+            label: 'OK', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
   }
 
   @override
@@ -163,9 +189,11 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
             ),
-            RaisedButton(
-              onPressed: _disableNotifs,
-              child: const Text('Disable Detections', style: TextStyle(fontSize: 20)),
+            CheckboxListTile(
+              value: isDetectionEnabled,
+              title: Text("Detections Enabled"),
+              onChanged: _disableNotifs,
+              controlAffinity: ListTileControlAffinity.leading,
             ),
           ],
         ),
