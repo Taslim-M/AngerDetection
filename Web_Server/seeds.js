@@ -31,7 +31,7 @@ var seed_device = [
     {
         device_id: 322,
         user_id: 2,
-        live_stream_ip: "http://127.0.0.1/2330"
+        live_stream_ip: "http://192.168.0.111:8081/"
     },
     {
         device_id: 422,
