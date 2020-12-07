@@ -118,6 +118,11 @@ app.get("/incidents", async function (req, res) {
 //     res.status(200).send(incident);
 // });
 
+app.post("/flutter_disable_notifs", function (req, res) {
+    console.log("Rcvd: " + req.body.notifMode);
+    res.status(200).send({});
+});
+
 //start server
 app.listen(process.env.PORT || 3000, function () { console.log("Server Started"); });
 
@@ -146,10 +151,7 @@ client.on('message', async function (topic, message) {
     console.log("Added" + incident);
 });
 
-app.post("/flutter_disable_notifs", function (req, res) {
-    console.log("Rcvd: " + req.body.notifMode);
-    res.status(200).send({});
-});
+
 
 //start server
 app.listen(process.env.PORT || 3000, function () { console.log("Server Started"); });

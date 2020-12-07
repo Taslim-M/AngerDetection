@@ -133,21 +133,5 @@ class MQTTClient {
 void _onMessage(String topic, String payload){
   print('my own onMessage'+topic+':'+payload);
 }
-// Sample Program
-void main() async {
-  // MQTTClient cl = new MQTTClient('broker.mqttdashboard.com', '8000',_onMessage);
-  MQTTClient cl = new MQTTClient('localhost', '1883',_onMessage);
-  await cl.connect();
-
-  // can specify Qos using
-  // MqttQos.atLeastOnce
-  // MqttQos.atMostOnce
-  // MqttQos.exactlyOnce
-
-  // topic and Qos
-  cl.subscribe('coe457/hello', null);
-  // topic, payload, and Qos
-  cl.publish('coe457/hello','hello from flutter',null);
-}
 
 /* */
