@@ -326,7 +326,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Column(
                       children: [
                         Text(
-                          "Tampering Detection",
+                          "Tamper Detection",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
