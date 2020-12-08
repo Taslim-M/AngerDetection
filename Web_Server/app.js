@@ -133,22 +133,21 @@ app.post("/flutter_disable_motion", function (req, res) {
     res.status(200).send({});
 });
 
-app.get("/is_detecting_anger", function (req, res) {
-    var toSend = {detectingAnger: isDetectingAnger};
+app.get("/get_flutter_configs", function (req, res) {
+    var toSend = {
+        alexaAllowed: (isAlexaAllowed=="allow"),
+        detectingMotion: isDetectingMotion,
+        detectingAnger: isDetectingAnger,
+    };
     console.log("Sending: "+JSON.stringify(toSend));
     res.send(toSend);
 });
 
-app.get("/is_detecting_motion", function (req, res) {
-    var toSend = {detectingMotion: isDetectingMotion};
-    console.log("Sending: "+JSON.stringify(toSend));
-    res.send(toSend);
-});
 
 //MQTT -----------------------------------------------
 var mqtt = require('mqtt')
-var client = mqtt.connect('ws://localhost:9001')
-var flutterClient = mqtt.connect('mqtt://localhost:1883')
+var client = mqtt.connect('ws://localhost:9001', {clientId: 1})
+var flutterClient = mqtt.connect('mqtt://localhost:1883', {clientId: 2})
 
 
 client.on('connect', function () {
@@ -159,15 +158,24 @@ client.on('connect', function () {
     })
 });
 
+flutterClient.on('connect', function () {
+    client.subscribe('configure/alexa', function (err) {
+        if (err) {
+            console.log(err);
+        }
+    })
+});
+
 flutterClient.on('message', async function (topic, message) {
     console.log('rcvd flutter');
     if (topic == "configure/alexa"){
-        isAlexaAllowed =message.toString();
+        isAlexaAllowed = message.toString();
         console.log("MQTT from Flutter: "+isAlexaAllowed);
     }
 });
 
 client.on('message', async function (topic, message) {
+    console.log(topic + " " + message)
     if (topic == "configure/alexa"){
         isAlexaAllowed =message.toString();
         console.log("MQTT from Flutter: "+isAlexaAllowed);

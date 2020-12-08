@@ -15,6 +15,7 @@ import 'mqtt.dart';
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   setupNotifs();
   runApp(MyApp());
 }
@@ -54,7 +55,7 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Anger Detector Configuration'),
     );
   }
 }
@@ -73,14 +74,14 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isAngerDetectionEnabled = true;
   bool isMotionDetectionEnabled = true;
   bool isAlexaEnabled = true;
+  List<bool> isSelected = [true, true, true];
 
   MQTTClient cl;
 
   void initState() {
     super.initState();
     // initialize MQTT
-    _getAngerDetectionMode();
-    _getMotionDetectionMode();
+    _getCurrentConfigs();
     setUpMQTT();
   }
 
@@ -95,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // create an MQTT client.
     cl = new MQTTClient('10.0.2.2', '1883', _onMQTTMessage);
     await cl.connect();
-    cl.subscribe('anger/test', null);
+    cl.subscribe('incidents/#', null);
   }
 
   void _onMQTTMessage(String topic, String payload)  async {
@@ -163,27 +164,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 
-
-  void _getAngerDetectionMode() async {
-    print("Getting current Anger");
-    http.Response response = await http.get('http://10.0.2.2:3000/is_detecting_anger');
-    print(response.statusCode);
-    var _get_result = jsonDecode(response.body);
-    print(_get_result);
-    setState(() {
-      isAngerDetectionEnabled = _get_result['detectingAnger'];
-    });
-  }
-
-
-  void _getMotionDetectionMode() async {
-    print("Getting current Motion");
-    http.Response response = await http.get('http://10.0.2.2:3000/is_detecting_motion');
+  void _getCurrentConfigs() async {
+    print("Getting current configs");
+    http.Response response = await http.get('http://10.0.2.2:3000/get_flutter_configs');
     print(response.statusCode);
     var _get_result = jsonDecode(response.body);
     print(_get_result);
     setState(() {
       isMotionDetectionEnabled = _get_result['detectingMotion'];
+      isAlexaEnabled = _get_result['alexaAllowed'];
+      isAngerDetectionEnabled = _get_result['detectingAnger'];
     });
   }
 
@@ -201,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Center(child: Text(widget.title)),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -230,11 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
