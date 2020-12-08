@@ -94,13 +94,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void setUpMQTT() async {
     // create an MQTT client.
-    cl = new MQTTClient('10.0.2.2', '1883', _onMQTTMessage);
+    cl = new MQTTClient('10.0.2.2', '9001', _onMQTTMessage);
     await cl.connect();
     cl.subscribe('incidents/#', null);
   }
 
   void _onMQTTMessage(String topic, String payload)  async {
     print('rcvd Message'+topic+':'+payload);
+    var _get_result = jsonDecode(payload);
+    var ntfTitle = _get_result['incident_type'];
+    var dev = _get_result['device_id'];
+    var ntfBody = "Alert! "+_get_result['incident_type'] + " detection on device $dev";
+
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
     AndroidNotificationDetails(
@@ -111,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
     const NotificationDetails platformChannelSpecifics =
     NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-        0, topic, payload, platformChannelSpecifics,
+        0, ntfTitle, ntfBody, platformChannelSpecifics,
         payload: 'item x');
 
 

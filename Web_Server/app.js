@@ -146,8 +146,7 @@ app.get("/get_flutter_configs", function (req, res) {
 
 //MQTT -----------------------------------------------
 var mqtt = require('mqtt')
-var client = mqtt.connect('ws://localhost:9001', {clientId: 1})
-var flutterClient = mqtt.connect('mqtt://localhost:1883', {clientId: 2})
+var client = mqtt.connect('ws://localhost:9001')
 
 
 client.on('connect', function () {
@@ -155,29 +154,18 @@ client.on('connect', function () {
         if (err) {
             console.log(err);
         }
-    })
-});
-
-flutterClient.on('connect', function () {
+    });
     client.subscribe('configure/alexa', function (err) {
         if (err) {
             console.log(err);
         }
-    })
-});
-
-flutterClient.on('message', async function (topic, message) {
-    console.log('rcvd flutter');
-    if (topic == "configure/alexa"){
-        isAlexaAllowed = message.toString();
-        console.log("MQTT from Flutter: "+isAlexaAllowed);
-    }
+    });
 });
 
 client.on('message', async function (topic, message) {
     console.log(topic + " " + message)
     if (topic == "configure/alexa"){
-        isAlexaAllowed =message.toString();
+        isAlexaAllowed = message.toString();
         console.log("MQTT from Flutter: "+isAlexaAllowed);
     }
     else {
@@ -188,9 +176,18 @@ client.on('message', async function (topic, message) {
             incident_time: Date.now(),
             incident_type: data.incident_type
         }
-        let incident = await Incident.create(new_inc);
-        incident.save();
-        console.log("Added" + incident);
+
+        if (new_inc.incident_type == "Anger" && !isDetectingAnger){
+            //skip
+        }
+        else if (new_inc.incident_type == "Position" && !isDetectingMotion){
+            //skip
+        }
+        else {
+            let incident = await Incident.create(new_inc);
+            incident.save();
+            console.log("Added" + incident);
+        }
     }
 });
 
