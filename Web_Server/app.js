@@ -184,6 +184,7 @@ client.on('message', async function (topic, message) {
             //skip
         }
         else {
+            client.publish('alexa_incidents', JSON.stringify(new_inc));
             let incident = await Incident.create(new_inc);
             incident.save();
             console.log("Added" + incident);
