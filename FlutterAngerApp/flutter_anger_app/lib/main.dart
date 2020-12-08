@@ -102,23 +102,29 @@ class _MyHomePageState extends State<MyHomePage> {
   void _onMQTTMessage(String topic, String payload)  async {
     print('rcvd Message'+topic+':'+payload);
     var _get_result = jsonDecode(payload);
-    var ntfTitle = _get_result['incident_type'];
-    var dev = _get_result['device_id'];
-    var ntfBody = "Alert! "+_get_result['incident_type'] + " detection on device $dev";
 
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
-        '1', 'your channel name', 'your channel description',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: false);
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-        0, ntfTitle, ntfBody, platformChannelSpecifics,
-        payload: 'item x');
-
+    if (_get_result['incident_type']=="Anger" && !isAngerDetectionEnabled){
+      //skip
+    }
+    else if (_get_result['incident_type']=="Position" && !isMotionDetectionEnabled) {
+      //skip
+    }
+    else {
+      var ntfTitle = _get_result['incident_type'];
+      var dev = _get_result['device_id'];
+      var ntfBody = "Alert! "+_get_result['incident_type'] + " detection on device $dev";
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails(
+          '1', 'your channel name', 'your channel description',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: false);
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+      await flutterLocalNotificationsPlugin.show(
+          0, ntfTitle, ntfBody, platformChannelSpecifics,
+          payload: 'item x');
+    }
 
   }
 
@@ -202,25 +208,105 @@ class _MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            CheckboxListTile(
-              value: isAngerDetectionEnabled,
-              title: Text("Anger Detection Enabled"),
-              onChanged: _setAngerDetectionMode,
-              controlAffinity: ListTileControlAffinity.trailing,
+            Flexible(
+              child: FractionallySizedBox(
+                widthFactor: 1,
+                heightFactor: 0.7,
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: Image.network(
+                      'https://image.freepik.com/free-vector/setup-concept-illustration_114360-382.jpg'),
+                ),
+              ),
             ),
-            CheckboxListTile(
-              value: isMotionDetectionEnabled,
-              title: Text("Motion Detection Enabled"),
-              onChanged: _setMotionDetectionMode,
-              controlAffinity: ListTileControlAffinity.trailing,
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        children: [
+                          Icon(Icons.sentiment_very_dissatisfied_outlined),
+                        ],
+                      ),
+                      Column(
+                        children: [Text("Anger Detection Enabled",style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),)],
+                      ),
+                      Column(
+                        children: [
+                          Switch(
+                            value: isAngerDetectionEnabled,
+                            onChanged: _setAngerDetectionMode,
+                          )
+                        ],
+                      ),
+                    ],
+                ),
+              ),
             ),
-            CheckboxListTile(
-              value: isAlexaEnabled,
-              title: Text("Alexa Enabled"),
-              onChanged: _setAlexaMode,
-              controlAffinity: ListTileControlAffinity.trailing,
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        Icon(Icons.vibration_outlined),
+                      ],
+                    ),
+                    Column(
+                      children: [Text("Tampering Detection Enabled",style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),)],
+                    ),
+                    Column(
+                      children: [
+                        Switch(
+                          value: isMotionDetectionEnabled,
+                          onChanged: _setMotionDetectionMode,
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        Icon(Icons.record_voice_over_outlined),
+                      ],
+                    ),
+                    Column(
+                      children: [Text("Alexa Enabled",style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),)],
+                    ),
+                    Column(
+                      children: [
+                        Switch(
+                          value: isAlexaEnabled,
+                          onChanged: _setAlexaMode,
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
