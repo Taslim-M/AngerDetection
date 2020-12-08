@@ -70,12 +70,17 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  bool isDetectionEnabled = true;
+  bool isAngerDetectionEnabled = true;
+  bool isMotionDetectionEnabled = true;
+  bool isAlexaEnabled = true;
+
   MQTTClient cl;
 
   void initState() {
     super.initState();
     // initialize MQTT
+    _getAngerDetectionMode();
+    _getMotionDetectionMode();
     setUpMQTT();
   }
 
@@ -107,34 +112,81 @@ class _MyHomePageState extends State<MyHomePage> {
     await flutterLocalNotificationsPlugin.show(
         0, topic, payload, platformChannelSpecifics,
         payload: 'item x');
-    // if (topic == "anger/test"){
-    //   Fluttertoast.showToast(
-    //       msg: payload,
-    //       toastLength: Toast.LENGTH_SHORT,
-    //       gravity: ToastGravity.BOTTOM,
-    //       timeInSecForIosWeb: 1,
-    //       backgroundColor: Colors.red,
-    //       textColor: Colors.white,
-    //       fontSize: 16.0
-    //   );
-    // }
+
 
   }
 
-  void _disableNotifs(bool newValue) async {
-    print("disabled Notifs!");
+  void _setAngerDetectionMode(bool newValue) async {
+    setState(() {
+      isAngerDetectionEnabled = newValue;
+    });
+    print("changed Anger!");
     http.Response response = await http.post(
-      'http://10.0.2.2:3000/flutter_disable_notifs',
+      'http://10.0.2.2:3000/flutter_disable_anger',
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{
-        'notifMode': 'Hello From Flutter!',
+      body: jsonEncode(<String, bool>{
+        'detectingAnger': newValue,
       }),
     );
-
     print(response.statusCode);
   }
+
+  void _setMotionDetectionMode(bool newValue) async {
+    setState(() {
+      isMotionDetectionEnabled = newValue;
+    });
+    print("changed Motion!");
+    http.Response response = await http.post(
+      'http://10.0.2.2:3000/flutter_disable_motion',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, bool>{
+        'detectingMotion': newValue,
+      }),
+    );
+    print(response.statusCode);
+  }
+
+  void _setAlexaMode(bool newValue) async {
+    setState(() {
+      isAlexaEnabled = newValue;
+    });
+    print("changed Alexa!");
+    var valueToPublish = "not_allow";
+    if (newValue){
+      valueToPublish = "allow";
+    }
+    cl.publish("configure/alexa", valueToPublish, null);
+  }
+
+
+
+  void _getAngerDetectionMode() async {
+    print("Getting current Anger");
+    http.Response response = await http.get('http://10.0.2.2:3000/is_detecting_anger');
+    print(response.statusCode);
+    var _get_result = jsonDecode(response.body);
+    print(_get_result);
+    setState(() {
+      isAngerDetectionEnabled = _get_result['detectingAnger'];
+    });
+  }
+
+
+  void _getMotionDetectionMode() async {
+    print("Getting current Motion");
+    http.Response response = await http.get('http://10.0.2.2:3000/is_detecting_motion');
+    print(response.statusCode);
+    var _get_result = jsonDecode(response.body);
+    print(_get_result);
+    setState(() {
+      isMotionDetectionEnabled = _get_result['detectingMotion'];
+    });
+  }
+
 
 
   @override
@@ -157,18 +209,23 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            CheckboxListTile(
+              value: isAngerDetectionEnabled,
+              title: Text("Anger Detection Enabled"),
+              onChanged: _setAngerDetectionMode,
+              controlAffinity: ListTileControlAffinity.trailing,
             ),
             CheckboxListTile(
-              value: isDetectionEnabled,
-              title: Text("Detections Enabled"),
-              onChanged: _disableNotifs,
-              controlAffinity: ListTileControlAffinity.leading,
+              value: isMotionDetectionEnabled,
+              title: Text("Motion Detection Enabled"),
+              onChanged: _setMotionDetectionMode,
+              controlAffinity: ListTileControlAffinity.trailing,
+            ),
+            CheckboxListTile(
+              value: isAlexaEnabled,
+              title: Text("Alexa Enabled"),
+              onChanged: _setAlexaMode,
+              controlAffinity: ListTileControlAffinity.trailing,
             ),
           ],
         ),

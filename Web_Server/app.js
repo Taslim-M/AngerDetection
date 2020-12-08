@@ -9,6 +9,10 @@ var express = require('express'),
     Incident = require("./models/incidents"),
     seedDb = require("./seeds");
 
+isDetectingAnger = true;
+isDetectingMotion = true;
+isAlexaAllowed = "allow";
+
 mongoose.connect('mongodb://localhost:27017/iot_anger', { useNewUrlParser: true, useUnifiedTopology: true });
 
 seedDb();
@@ -117,17 +121,35 @@ app.get("/incidents", async function (req, res) {
 //     res.status(200).send(incident);
 // });
 
-app.post("/flutter_disable_notifs", function (req, res) {
-    console.log("Rcvd: " + req.body.notifMode);
+app.post("/flutter_disable_anger", function (req, res) {
+    console.log("Rcvd: " + JSON.stringify(req.body));
+    isDetectingAnger = req.body.detectingAnger;
     res.status(200).send({});
 });
 
-//start server
-app.listen(process.env.PORT || 3000, function () { console.log("Server Started"); });
+app.post("/flutter_disable_motion", function (req, res) {
+    console.log("Rcvd: " + JSON.stringify(req.body));
+    isDetectingMotion = req.body.detectingMotion;
+    res.status(200).send({});
+});
+
+app.get("/is_detecting_anger", function (req, res) {
+    var toSend = {detectingAnger: isDetectingAnger};
+    console.log("Sending: "+JSON.stringify(toSend));
+    res.send(toSend);
+});
+
+app.get("/is_detecting_motion", function (req, res) {
+    var toSend = {detectingMotion: isDetectingMotion};
+    console.log("Sending: "+JSON.stringify(toSend));
+    res.send(toSend);
+});
 
 //MQTT -----------------------------------------------
 var mqtt = require('mqtt')
 var client = mqtt.connect('ws://localhost:9001')
+var flutterClient = mqtt.connect('mqtt://localhost:1883')
+
 
 client.on('connect', function () {
     client.subscribe('incidents/#', function (err) {
@@ -137,20 +159,34 @@ client.on('connect', function () {
     })
 });
 
-client.on('message', async function (topic, message) {
-    data =JSON.parse(message.toString());
-    console.log(data)
-    var new_inc = {
-        device_id: data.device_id,
-        incident_time: Date.now(),
-        incident_type: data.incident_type
+flutterClient.on('message', async function (topic, message) {
+    console.log('rcvd flutter');
+    if (topic == "configure/alexa"){
+        isAlexaAllowed =message.toString();
+        console.log("MQTT from Flutter: "+isAlexaAllowed);
     }
-    let incident = await Incident.create(new_inc);
-    incident.save();
-    console.log("Added" + incident);
+});
+
+client.on('message', async function (topic, message) {
+    if (topic == "configure/alexa"){
+        isAlexaAllowed =message.toString();
+        console.log("MQTT from Flutter: "+isAlexaAllowed);
+    }
+    else {
+        data =JSON.parse(message.toString());
+        console.log(data)
+        var new_inc = {
+            device_id: data.device_id,
+            incident_time: Date.now(),
+            incident_type: data.incident_type
+        }
+        let incident = await Incident.create(new_inc);
+        incident.save();
+        console.log("Added" + incident);
+    }
 });
 
 
 
 //start server
-app.listen(process.env.PORT || 3001, function () { console.log("Server Started"); });
+app.listen(process.env.PORT || 3000, function () { console.log("Server Started"); });
