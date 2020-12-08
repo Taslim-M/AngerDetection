@@ -12,25 +12,19 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'mqtt.dart';
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 void main() {
-  runApp(MyApp());
   setupNotifs();
+  runApp(MyApp());
 }
 
 void setupNotifs() async {
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+  print("setup!");
 // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
-  const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('res/drawable/app_icon');
-  final IOSInitializationSettings initializationSettingsIOS =
-  IOSInitializationSettings(
-      onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-  final MacOSInitializationSettings initializationSettingsMacOS =
-  MacOSInitializationSettings();
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('app_notf_icon');
+  final IOSInitializationSettings initializationSettingsIOS = IOSInitializationSettings(onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+  final MacOSInitializationSettings initializationSettingsMacOS = MacOSInitializationSettings();
   final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
@@ -68,15 +62,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -108,31 +93,31 @@ class _MyHomePageState extends State<MyHomePage> {
     cl.subscribe('anger/test', null);
   }
 
-  void _onMQTTMessage(String topic, String payload)  {
+  void _onMQTTMessage(String topic, String payload)  async {
     print('rcvd Message'+topic+':'+payload);
-    //
-    // const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    // AndroidNotificationDetails(
-    //     '1', 'your channel name', 'your channel description',
-    //     importance: Importance.max,
-    //     priority: Priority.high,
-    //     showWhen: false);
-    // const NotificationDetails platformChannelSpecifics =
-    // NotificationDetails(android: androidPlatformChannelSpecifics);
-    // await flutterLocalNotificationsPlugin.show(
-    //     0, 'plain title', 'plain body', platformChannelSpecifics,
-    //     payload: 'item x');
-    if (topic == "anger/test"){
-      Fluttertoast.showToast(
-          msg: payload,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0
-      );
-    }
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+        '1', 'your channel name', 'your channel description',
+        importance: Importance.max,
+        priority: Priority.high,
+        showWhen: false);
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+        0, topic, payload, platformChannelSpecifics,
+        payload: 'item x');
+    // if (topic == "anger/test"){
+    //   Fluttertoast.showToast(
+    //       msg: payload,
+    //       toastLength: Toast.LENGTH_SHORT,
+    //       gravity: ToastGravity.BOTTOM,
+    //       timeInSecForIosWeb: 1,
+    //       backgroundColor: Colors.red,
+    //       textColor: Colors.white,
+    //       fontSize: 16.0
+    //   );
+    // }
 
   }
 
@@ -151,16 +136,6 @@ class _MyHomePageState extends State<MyHomePage> {
     print(response.statusCode);
   }
 
-  void _showToast(BuildContext context, String text) {
-    final scaffold = Scaffold.of(context);
-    scaffold.showSnackBar(
-      SnackBar(
-        content: Text(text),
-        action: SnackBarAction(
-            label: 'OK', onPressed: scaffold.hideCurrentSnackBar),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,4 +186,15 @@ Future onDidReceiveLocalNotification(
     int id, String title, String body, String payload) async {
   // display a dialog with the notification details, tap ok to go to another page
 
+}
+
+_requestIOSPermission() {
+  flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+      IOSFlutterLocalNotificationsPlugin>()
+      .requestPermissions(
+    alert: false,
+    badge: true,
+    sound: true,
+  );
 }
