@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
@@ -12,7 +11,8 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'mqtt.dart';
 
-FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +23,13 @@ void main() {
 void setupNotifs() async {
   print("setup!");
 // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
-  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('app_notf_icon');
-  final IOSInitializationSettings initializationSettingsIOS = IOSInitializationSettings(onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-  final MacOSInitializationSettings initializationSettingsMacOS = MacOSInitializationSettings();
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('app_notf_icon');
+  final IOSInitializationSettings initializationSettingsIOS =
+      IOSInitializationSettings(
+          onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+  final MacOSInitializationSettings initializationSettingsMacOS =
+      MacOSInitializationSettings();
   final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
@@ -42,7 +46,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         accentColor: Colors.amber,
       ),
-
       home: MyHomePage(title: 'Anger Detector Configuration'),
     );
   }
@@ -65,7 +68,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Color angerColor = Colors.orangeAccent;
   Color motionColor = Colors.orangeAccent;
   Color alexaColor = Colors.orangeAccent;
-
+  String alexaText = "Disabled";
+  String angerText = "Disabled";
+  String motionText = "Disabled";
   List<bool> isSelected = [true, true, true];
 
   MQTTClient cl;
@@ -76,7 +81,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _getCurrentConfigs();
     setUpMQTT();
   }
-
 
   void _incrementCounter() {
     setState(() {
@@ -91,40 +95,46 @@ class _MyHomePageState extends State<MyHomePage> {
     cl.subscribe('incidents/#', null);
   }
 
-  void _onMQTTMessage(String topic, String payload)  async {
-    print('rcvd Message'+topic+':'+payload);
+  void _onMQTTMessage(String topic, String payload) async {
+    print('rcvd Message' + topic + ':' + payload);
     var _get_result = jsonDecode(payload);
 
-    if (_get_result['incident_type']=="Anger" && !isAngerDetectionEnabled){
+    if (_get_result['incident_type'] == "Anger" && !isAngerDetectionEnabled) {
       //skip
-    }
-    else if (_get_result['incident_type']=="Position" && !isMotionDetectionEnabled) {
+    } else if (_get_result['incident_type'] == "Position" &&
+        !isMotionDetectionEnabled) {
       //skip
-    }
-    else {
+    } else {
       var ntfTitle = _get_result['incident_type'];
       var dev = _get_result['device_id'];
-      var ntfBody = "Alert! "+_get_result['incident_type'] + " detection on device $dev";
+      var ntfBody = "Alert! " +
+          _get_result['incident_type'] +
+          " detection on device $dev";
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails(
-          '1', 'your channel name', 'your channel description',
-          importance: Importance.max,
-          priority: Priority.high,
-          showWhen: false);
+          AndroidNotificationDetails(
+              '1', 'your channel name', 'your channel description',
+              importance: Importance.max,
+              priority: Priority.high,
+              showWhen: false);
       const NotificationDetails platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
+          NotificationDetails(android: androidPlatformChannelSpecifics);
       await flutterLocalNotificationsPlugin.show(
           0, ntfTitle, ntfBody, platformChannelSpecifics,
           payload: 'item x');
     }
-
   }
 
   void _setAngerDetectionMode(bool newValue) async {
     setState(() {
       isAngerDetectionEnabled = newValue;
-      if(isAngerDetectionEnabled) angerColor = Colors.greenAccent;
-      else angerColor = Colors.orangeAccent;
+      if (isAngerDetectionEnabled) {
+        angerColor = Colors.greenAccent;
+        angerText = "Enabled";
+      }
+      else {
+        angerColor = Colors.orangeAccent;
+        angerText = "Disabled";
+      }
     });
     print("changed Anger!");
     http.Response response = await http.post(
@@ -142,8 +152,15 @@ class _MyHomePageState extends State<MyHomePage> {
   void _setMotionDetectionMode(bool newValue) async {
     setState(() {
       isMotionDetectionEnabled = newValue;
-      if(isMotionDetectionEnabled) motionColor = Colors.greenAccent;
-      else motionColor = Colors.orangeAccent;
+      if (isMotionDetectionEnabled){
+        motionText="Enabled";
+        motionColor = Colors.greenAccent;
+      }
+      else{
+        motionText="Disabled";
+        motionColor = Colors.orangeAccent;
+      }
+
     });
     print("changed Motion!");
     http.Response response = await http.post(
@@ -161,35 +178,47 @@ class _MyHomePageState extends State<MyHomePage> {
   void _setAlexaMode(bool newValue) async {
     setState(() {
       isAlexaEnabled = newValue;
-      if(isAlexaEnabled) alexaColor = Colors.greenAccent;
-      else alexaColor = Colors.orangeAccent;
+      if (isAlexaEnabled) {
+        alexaColor = Colors.greenAccent;
+        alexaText = "Enabled";
+      } else {
+        alexaText = "Disabled";
+        alexaColor = Colors.orangeAccent;
+      }
     });
     print("changed Alexa!");
     var valueToPublish = "not_allow";
-    if (newValue){
+    if (newValue) {
       valueToPublish = "allow";
     }
     cl.publish("configure/alexa", valueToPublish, null);
   }
 
-
   void _getCurrentConfigs() async {
     print("Getting current configs");
-    http.Response response = await http.get('http://10.0.2.2:3000/get_flutter_configs');
+    http.Response response =
+        await http.get('http://10.0.2.2:3000/get_flutter_configs');
     print(response.statusCode);
     var _get_result = jsonDecode(response.body);
     print(_get_result);
     setState(() {
       isMotionDetectionEnabled = _get_result['detectingMotion'];
-      if(isMotionDetectionEnabled)motionColor= Colors.greenAccent;
+      if (isMotionDetectionEnabled) {
+        motionText="Enabled";
+        motionColor = Colors.greenAccent;
+      }
       isAlexaEnabled = _get_result['alexaAllowed'];
-      if(isAlexaEnabled) alexaColor = Colors.greenAccent;
+      if (isAlexaEnabled) {
+        alexaColor = Colors.greenAccent;
+        alexaText = "Enabled";
+      }
       isAngerDetectionEnabled = _get_result['detectingAnger'];
-      if(isAngerDetectionEnabled) angerColor=Colors.greenAccent;
+      if (isAngerDetectionEnabled) {
+        angerText = "Enabled";
+        angerColor = Colors.greenAccent;
+      }
     });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +232,12 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Center(child: Text(widget.title,  style: TextStyle(fontWeight: FontWeight.bold, color:Colors.cyanAccent),)),
+        title: Center(
+            child: Text(
+          widget.title,
+          style:
+              TextStyle(fontWeight: FontWeight.bold, color: Colors.cyanAccent),
+        )),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -224,35 +258,57 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("Your last settings are automatically restored.",style: TextStyle( fontStyle: FontStyle.italic,color:Colors.lightGreenAccent),),
+              child: Text(
+                "Your last settings are automatically restored.",
+                style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: Colors.lightGreenAccent),
+              ),
             ),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        children: [
-                          Icon(Icons.sentiment_very_dissatisfied_outlined, color: angerColor),
-                        ],
-                      ),
-                      Column(
-                        children: [Text("Anger Detection Enabled",style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),)],
-                      ),
-                      Column(
-                        children: [
-                          Switch(
-                            inactiveThumbColor: Colors.orangeAccent,
-                            value: isAngerDetectionEnabled,
-                            onChanged: _setAngerDetectionMode,
-                          )
-                        ],
-                      ),
-                    ],
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        Icon(Icons.sentiment_very_dissatisfied_outlined,
+                            color: angerColor),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          "Anger Detection",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          angerText,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: angerColor),
+                        )
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Switch(
+                          inactiveThumbColor: Colors.orangeAccent,
+                          value: isAngerDetectionEnabled,
+                          onChanged: _setAngerDetectionMode,
+                        )
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -268,10 +324,26 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                     Column(
-                      children: [Text("Tampering Detection Enabled",style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),)],
+                      children: [
+                        Text(
+                          "Tampering Detection",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          motionText,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: motionColor),
+                        )
+                      ],
                     ),
                     Column(
                       children: [
@@ -294,14 +366,33 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Column(
                       children: [
-                        Icon(Icons.record_voice_over_outlined, color: alexaColor,),
+                        Icon(
+                          Icons.record_voice_over_outlined,
+                          color: alexaColor,
+                        ),
                       ],
                     ),
                     Column(
-                      children: [Text("Alexa Enabled",style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),)],
+                      children: [
+                        Text(
+                          "Alexa EchoDot",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          alexaText,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: alexaColor),
+                        )
+                      ],
                     ),
                     Column(
                       children: [
@@ -327,16 +418,15 @@ class _MyHomePageState extends State<MyHomePage> {
 Future onDidReceiveLocalNotification(
     int id, String title, String body, String payload) async {
   // display a dialog with the notification details, tap ok to go to another page
-
 }
 
 _requestIOSPermission() {
   flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      IOSFlutterLocalNotificationsPlugin>()
+          IOSFlutterLocalNotificationsPlugin>()
       .requestPermissions(
-    alert: false,
-    badge: true,
-    sound: true,
-  );
+        alert: false,
+        badge: true,
+        sound: true,
+      );
 }
