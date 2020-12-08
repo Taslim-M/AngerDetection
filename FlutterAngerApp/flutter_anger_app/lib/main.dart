@@ -39,22 +39,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+      theme: ThemeData.dark().copyWith(
+        accentColor: Colors.amber,
       ),
+
       home: MyHomePage(title: 'Anger Detector Configuration'),
     );
   }
@@ -74,6 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isAngerDetectionEnabled = true;
   bool isMotionDetectionEnabled = true;
   bool isAlexaEnabled = true;
+  Color angerColor = Colors.orangeAccent;
+  Color motionColor = Colors.orangeAccent;
+  Color alexaColor = Colors.orangeAccent;
+
   List<bool> isSelected = [true, true, true];
 
   MQTTClient cl;
@@ -131,6 +123,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _setAngerDetectionMode(bool newValue) async {
     setState(() {
       isAngerDetectionEnabled = newValue;
+      if(isAngerDetectionEnabled) angerColor = Colors.greenAccent;
+      else angerColor = Colors.orangeAccent;
     });
     print("changed Anger!");
     http.Response response = await http.post(
@@ -148,6 +142,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _setMotionDetectionMode(bool newValue) async {
     setState(() {
       isMotionDetectionEnabled = newValue;
+      if(isMotionDetectionEnabled) motionColor = Colors.greenAccent;
+      else motionColor = Colors.orangeAccent;
     });
     print("changed Motion!");
     http.Response response = await http.post(
@@ -165,6 +161,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _setAlexaMode(bool newValue) async {
     setState(() {
       isAlexaEnabled = newValue;
+      if(isAlexaEnabled) alexaColor = Colors.greenAccent;
+      else alexaColor = Colors.orangeAccent;
     });
     print("changed Alexa!");
     var valueToPublish = "not_allow";
@@ -183,8 +181,11 @@ class _MyHomePageState extends State<MyHomePage> {
     print(_get_result);
     setState(() {
       isMotionDetectionEnabled = _get_result['detectingMotion'];
+      if(isMotionDetectionEnabled)motionColor= Colors.greenAccent;
       isAlexaEnabled = _get_result['alexaAllowed'];
+      if(isAlexaEnabled) alexaColor = Colors.greenAccent;
       isAngerDetectionEnabled = _get_result['detectingAnger'];
+      if(isAngerDetectionEnabled) angerColor=Colors.greenAccent;
     });
   }
 
@@ -202,7 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Center(child: Text(widget.title)),
+        title: Center(child: Text(widget.title,  style: TextStyle(fontWeight: FontWeight.bold, color:Colors.cyanAccent),)),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -221,6 +222,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text("Your last settings are automatically restored.",style: TextStyle( fontStyle: FontStyle.italic,color:Colors.lightGreenAccent),),
+            ),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -229,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: [
                       Column(
                         children: [
-                          Icon(Icons.sentiment_very_dissatisfied_outlined),
+                          Icon(Icons.sentiment_very_dissatisfied_outlined, color: angerColor),
                         ],
                       ),
                       Column(
@@ -241,6 +246,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Column(
                         children: [
                           Switch(
+                            inactiveThumbColor: Colors.orangeAccent,
                             value: isAngerDetectionEnabled,
                             onChanged: _setAngerDetectionMode,
                           )
@@ -258,7 +264,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Column(
                       children: [
-                        Icon(Icons.vibration_outlined),
+                        Icon(Icons.vibration_outlined, color: motionColor),
                       ],
                     ),
                     Column(
@@ -270,6 +276,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Column(
                       children: [
                         Switch(
+                          inactiveThumbColor: Colors.orangeAccent,
                           value: isMotionDetectionEnabled,
                           onChanged: _setMotionDetectionMode,
                         )
@@ -287,7 +294,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Column(
                       children: [
-                        Icon(Icons.record_voice_over_outlined),
+                        Icon(Icons.record_voice_over_outlined, color: alexaColor,),
                       ],
                     ),
                     Column(
@@ -300,6 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         Switch(
                           value: isAlexaEnabled,
+                          inactiveThumbColor: Colors.orangeAccent,
                           onChanged: _setAlexaMode,
                         )
                       ],
