@@ -181,6 +181,19 @@ client.on('message', async function (topic, message) {
 });
 
 
+// custom 404 page 
+app.use(function(req, res) {
+    res.type('text/plain');
+    res.status(404);
+    res.send('404 - Not Found');
+});
 
+// custom 500 page 
+app.use(function(err, req, res, next) {
+    console.error(err.stack);
+    res.type('text/plain');
+    res.status(500);
+    res.send('500 - Server Error');
+});
 //start server
 app.listen(process.env.PORT || 3000, function () { console.log("Server Started"); });
