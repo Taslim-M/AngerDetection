@@ -187,6 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
     print("changed Alexa!");
+    //Send server
     http.Response response = await http.post(
       'http://10.0.2.2:3000/flutter_disable_alexa',
       headers: <String, String>{
@@ -197,6 +198,18 @@ class _MyHomePageState extends State<MyHomePage> {
       }),
     );
     print(response.statusCode);
+
+    //Send Alexa Nodered
+    http.Response alexaResponse = await http.post(
+      'http://10.0.2.2:1880/flutter_disable_alexa',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, bool>{
+        'alexaAllowed': newValue,
+      }),
+    );
+    print(alexaResponse.statusCode);
   }
 
   void _getCurrentConfigs() async {
