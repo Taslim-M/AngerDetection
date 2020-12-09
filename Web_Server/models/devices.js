@@ -1,9 +1,9 @@
 var mongoose = require('mongoose');
 
 var deviceSchema = new mongoose.Schema({
-    device_id: Number,
-    user_id: Number,
-    live_stream_ip: String
+    device_id: {type: Number, unique: true,  required: true},
+    user_id: {type: Number, required: true},
+    live_stream_ip: {type: String, required: true},
 });
 
 module.exports = mongoose.model("Device", deviceSchema);
