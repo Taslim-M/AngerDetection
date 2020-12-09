@@ -53,7 +53,7 @@ app.post("/add_user", function (req, res) {
     User.create(user_to_add, function (err, new_user) {
         if (err) {
             console.log(err);
-            res.render("add_user", { msg: "Sorry there was some error, try again" });
+            res.render("add_user", { msg: "Sorry there was some error, try again You can contact the admin stating the error: " + err.message  });
         } else {
 
             res.render("add_user", { msg: "SUCCESS! Thank you for registering " + new_user.name + ". Your ID is " + new_user.id });
@@ -79,7 +79,7 @@ app.post("/add_device", function (req, res) {
     Device.create(device_to_add, function (err, new_device) {
         if (err) {
             console.log(err);
-            res.render("add_device", { msg: "Sorry there was some error, try again" });
+            res.render("add_device", { msg: "Sorry there was some error, try again. You can contact the admin stating the error: " + err.message });
         } else {
             res.render("add_device", { msg: "SUCCESS! Thank you for adding device with ID: " + new_device.device_id });
         }
@@ -99,7 +99,7 @@ app.get("/incidents", async function (req, res) {
 
     incidents_list = [];
     for (device of device_list) {
-        const incidents_now = await Incident.find({ "device_id": device.device_id });
+        const incidents_now = await Incident.find({ "device_id": device.device_id }).sort({incident_time:-1});
         // console.log(incidents_now);
         incidents_list.push(...incidents_now);
     }
@@ -109,17 +109,7 @@ app.get("/incidents", async function (req, res) {
 });
 
 //Add Incidents from Edge
-// app.post("/add_incident", async function (req, res) {
-//     var new_inc = {
-//         device_id: req.body.device_id,
-//         incident_time: Date.now(),
-//         incident_type: req.body.incident_type
-//     }
-//     let incident = await Incident.create(new_inc);
-//     incident.save();
-//     console.log("Added" + incident);
-//     res.status(200).send(incident);
-// });
+
 
 app.post("/flutter_disable_anger", function (req, res) {
     console.log("Rcvd: " + JSON.stringify(req.body));
@@ -191,6 +181,19 @@ client.on('message', async function (topic, message) {
 });
 
 
+// custom 404 page 
+app.use(function(req, res) {
+    res.type('text/plain');
+    res.status(404);
+    res.send('404 - Not Found');
+});
 
+// custom 500 page 
+app.use(function(err, req, res, next) {
+    console.error(err.stack);
+    res.type('text/plain');
+    res.status(500);
+    res.send('500 - Server Error');
+});
 //start server
 app.listen(process.env.PORT || 3000, function () { console.log("Server Started"); });
