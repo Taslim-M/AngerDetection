@@ -149,15 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print(response.statusCode);
 
     if (response.statusCode != 200){
-      Fluttertoast.showToast(
-          msg: "Couldn't connect to server",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.greenAccent,
-          textColor: Colors.white,
-          fontSize: 16.0
-      );
+      _showErrorToast();
     }
   }
 
