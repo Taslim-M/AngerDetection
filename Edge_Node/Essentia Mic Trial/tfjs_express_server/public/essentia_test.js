@@ -1,7 +1,10 @@
 const model = tf.loadLayersModel('http://localhost:3456/essentia_v1/model.json');
-model.then(()=>{
+model.then(() => {
     console.log("Model loaded!");
 })
+
+//!!! DEVICE_ID HARDCODED
+let DEVICE_ID = 422;
 
 //!!! HYPER PARAMS TO MATCH WITH LIBROSA
 let SPECTROGRAM_WIDTH = 151;
@@ -39,9 +42,9 @@ let gumStream;
 let plotContainerId = "plotDiv";
 let plotSpectrogram;
 
-function getEmotionFromTensor(predicted_tensor){
+function getEmotionFromTensor(predicted_tensor) {
     let pred = predicted_tensor.argMax();
-    if (pred == 1){
+    if (pred == 1) {
         return "ANG";
     }
     else {
@@ -110,59 +113,68 @@ function startMicRecordStream(
     }
 }
 
-function stopMicRecordStream() {
+function cutOffSpecAndOutput() {
     console.log("Stopped recording ...");
-    // stop mic stream
-    gumStream.getAudioTracks().forEach(function (track) {
-        track.stop();
-    });
-    $("#recordButton").removeClass("recording");
-    $("#recordButton").html(
-        'Mic &nbsp;&nbsp;<i class="microphone icon"></i>'
-    );
-    isPlotting = false;
-    audioCtx.suspend();
+    //make a deep copy
+    console.log("Full spec");
+    console.log(spectrogram);
 
     // NOW PERFORM INFERENCE
     let spec_tens = tf.tensor(spectrogram);
     model.then((x) => {
+        console.log("shape: "+spec_tens.print())
         spec_tens = spec_tens.reshape([1, 128, 151, 1]);
         let prediction = x.predict(spec_tens);
         console.log("Predicted array...");
         prediction.print();
         console.log("Predicted emotion...");
-        console.log(getEmotionFromTensor(prediction));
+        var emotionPredicted = getEmotionFromTensor(prediction);
+        console.log(emotionPredicted);
+        //reset spectrogram
+        spectrogram = [];
+
+        var mqttMessage = "Anger";
+
+        if (emotionPredicted == "OTH"){
+            mqttMessage = "Other";
+        }
+        
+        message = new Paho.MQTT.Message(mqttMessage);
+        message.destinationName = "incidents/"+DEVICE_ID;
+        client.send(message);
     });
-    
+
 
 }
 
 // ScriptNodeProcessor callback function to extract pitchyin feature using essentia.js and plotting it on the front-end
 function onRecordEssentiaFeatureExtractor(event) {
+    if (spectrogram.length < SPECTROGRAM_WIDTH) {
+        let audioBuffer = event.inputBuffer.getChannelData(0);
 
-    let audioBuffer = event.inputBuffer.getChannelData(0);
+        // modifying default extractor settings
+        essentiaExtractor.frameSize = bufferSize;
+        essentiaExtractor.hopSize = hopSize;
+        // settings specific to an algorithm
+        essentiaExtractor.profile.MelBands.numberBands = melNumBands;
+        // compute hpcp for overlapping frames of audio
+        let spectrum = essentiaExtractor.melSpectrumExtractor(audioBuffer, audioCtx.sampleRate);
+        let plot_spec = []
+        spectrogram.push(spectrum);
+        plot_spec.push(spectrum);
 
-    // modifying default extractor settings
-    essentiaExtractor.frameSize = bufferSize;
-    essentiaExtractor.hopSize = hopSize;
-    // settings specific to an algorithm
-    essentiaExtractor.profile.MelBands.numberBands = melNumBands;
-    // compute hpcp for overlapping frames of audio
-    let spectrum = essentiaExtractor.melSpectrumExtractor(audioBuffer, audioCtx.sampleRate);
-    let plot_spec = []
-    spectrogram.push(spectrum);
-    plot_spec.push(spectrum);
-
-    // here we call the plotting function to display realtime feature extraction results
-    plotSpectrogram.create(
-        plot_spec,
-        "Log-scaled MelSpectrogram",
-        bufferSize,
-        audioCtx.sampleRate,
-        hopSize
-    );
-    if (spectrogram.length >= SPECTROGRAM_WIDTH) {
-        stopMicRecordStream();
+        // here we call the plotting function to display realtime feature extraction results
+        plotSpectrogram.create(
+            plot_spec,
+            "Log-scaled MelSpectrogram",
+            bufferSize,
+            audioCtx.sampleRate,
+            hopSize
+        );
+    }
+    else if (spectrogram.length >= SPECTROGRAM_WIDTH) {
+        console.log(spectrogram.length);
+        cutOffSpecAndOutput();
     }
 
     //   plotChroma.isPlotting = true;
@@ -209,7 +221,34 @@ $(document).ready(function () {
             });
 
         } else {
-            stopMicRecordStream();
+            cutOffSpecAndOutput();
         }
     }); // end recordButton onClick
 });
+
+//MQTT
+
+var wsbroker = "localhost"; //mqtt websocket enabled broker
+var wsport = 9001 // port for above
+
+// create client using the Paho library
+var client = new Paho.MQTT.Client(wsbroker, wsport,
+    "myclientid_" + parseInt(Math.random() * 100, 10));
+
+client.onConnectionLost = function (responseObject) {
+    console.log("connection lost: " + responseObject.errorMessage);
+};
+
+var options = {
+    timeout: 3,
+    onSuccess: function () {
+        console.log("mqtt connected");
+    },
+    onFailure: function (message) {
+        console.log("Connection failed: " + message.errorMessage);
+    }
+};
+
+function init() {
+    client.connect(options);
+}
