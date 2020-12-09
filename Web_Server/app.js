@@ -11,7 +11,7 @@ var express = require('express'),
 
 isDetectingAnger = true;
 isDetectingMotion = true;
-isAlexaAllowed = "allow";
+isAlexaAllowed = true;
 
 mongoose.connect('mongodb://localhost:27017/iot_anger', { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -133,9 +133,16 @@ app.post("/flutter_disable_motion", function (req, res) {
     res.status(200).send({});
 });
 
+
+app.post("/flutter_disable_alexa", function (req, res) {
+    console.log("Rcvd: " + JSON.stringify(req.body));
+    isAlexaAllowed = req.body.alexaAllowed;
+    res.status(200).send({});
+});
+
 app.get("/get_flutter_configs", function (req, res) {
     var toSend = {
-        alexaAllowed: (isAlexaAllowed=="allow"),
+        alexaAllowed: isAlexaAllowed,
         detectingMotion: isDetectingMotion,
         detectingAnger: isDetectingAnger,
     };
@@ -155,41 +162,32 @@ client.on('connect', function () {
             console.log(err);
         }
     });
-    client.subscribe('configure/alexa', function (err) {
-        if (err) {
-            console.log(err);
-        }
-    });
 });
 
 client.on('message', async function (topic, message) {
     console.log(topic + " " + message)
-    if (topic == "configure/alexa"){
-        isAlexaAllowed = message.toString();
-        console.log("MQTT from Flutter: "+isAlexaAllowed);
+      
+    data =JSON.parse(message.toString());
+    console.log(data)
+    var new_inc = {
+        device_id: data.device_id,
+        incident_time: Date.now(),
+        incident_type: data.incident_type
+    }
+
+    if (new_inc.incident_type == "Anger" && !isDetectingAnger){
+        //skip
+    }
+    else if (new_inc.incident_type == "Position" && !isDetectingMotion){
+        //skip
     }
     else {
-        data =JSON.parse(message.toString());
-        console.log(data)
-        var new_inc = {
-            device_id: data.device_id,
-            incident_time: Date.now(),
-            incident_type: data.incident_type
-        }
-
-        if (new_inc.incident_type == "Anger" && !isDetectingAnger){
-            //skip
-        }
-        else if (new_inc.incident_type == "Position" && !isDetectingMotion){
-            //skip
-        }
-        else {
-            client.publish('alexa_incidents', JSON.stringify(new_inc));
-            let incident = await Incident.create(new_inc);
-            incident.save();
-            console.log("Added" + incident);
-        }
+        client.publish('alexa_incidents', JSON.stringify(new_inc));
+        let incident = await Incident.create(new_inc);
+        incident.save();
+        console.log("Added" + incident);
     }
+    
 });
 
 

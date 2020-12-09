@@ -71,7 +71,6 @@ class _MyHomePageState extends State<MyHomePage> {
   String alexaText = "Disabled";
   String angerText = "Disabled";
   String motionText = "Disabled";
-  List<bool> isSelected = [true, true, true];
 
   MQTTClient cl;
 
@@ -105,6 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
         !isMotionDetectionEnabled) {
       //skip
     } else {
+      //Generate Notification
       var ntfTitle = _get_result['incident_type'];
       var dev = _get_result['device_id'];
       var ntfBody = "Alert! " +
@@ -187,11 +187,16 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
     print("changed Alexa!");
-    var valueToPublish = "not_allow";
-    if (newValue) {
-      valueToPublish = "allow";
-    }
-    cl.publish("configure/alexa", valueToPublish, null);
+    http.Response response = await http.post(
+      'http://10.0.2.2:3000/flutter_disable_alexa',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, bool>{
+        'alexaAllowed': newValue,
+      }),
+    );
+    print(response.statusCode);
   }
 
   void _getCurrentConfigs() async {
