@@ -62,9 +62,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  bool isAngerDetectionEnabled = true;
-  bool isMotionDetectionEnabled = true;
-  bool isAlexaEnabled = true;
+  bool isAngerDetectionEnabled = false;
+  bool isMotionDetectionEnabled = false;
+  bool isAlexaEnabled = false;
   Color angerColor = Colors.orangeAccent;
   Color motionColor = Colors.orangeAccent;
   Color alexaColor = Colors.orangeAccent;
@@ -147,6 +147,18 @@ class _MyHomePageState extends State<MyHomePage> {
       }),
     );
     print(response.statusCode);
+
+    if (response.statusCode != 200){
+      Fluttertoast.showToast(
+          msg: "Couldn't connect to server",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.greenAccent,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
   }
 
   void _setMotionDetectionMode(bool newValue) async {
@@ -173,9 +185,14 @@ class _MyHomePageState extends State<MyHomePage> {
       }),
     );
     print(response.statusCode);
+
+    if (response.statusCode != 200){
+      _showErrorToast();
+    }
   }
 
   void _setAlexaMode(bool newValue) async {
+    bool httpOk = true;
     setState(() {
       isAlexaEnabled = newValue;
       if (isAlexaEnabled) {
@@ -187,17 +204,6 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
     print("changed Alexa!");
-    //Send server
-    http.Response response = await http.post(
-      'http://10.0.2.2:3000/flutter_disable_alexa',
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, bool>{
-        'alexaAllowed': newValue,
-      }),
-    );
-    print(response.statusCode);
 
     //Send Alexa Nodered
     http.Response alexaResponse = await http.post(
@@ -210,6 +216,31 @@ class _MyHomePageState extends State<MyHomePage> {
       }),
     );
     print(alexaResponse.statusCode);
+    if (alexaResponse.statusCode == 200){
+      //Send server
+      http.Response response = await http.post(
+        'http://10.0.2.2:3000/flutter_disable_alexa',
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, bool>{
+          'alexaAllowed': newValue,
+        }),
+      );
+      print(response.statusCode);
+      if (response.statusCode != 200){
+        httpOk = false;
+      }
+    }
+    else{
+      httpOk = false;
+    }
+    if (!httpOk){
+      _showErrorToast();
+    }
+
+
+
   }
 
   void _getCurrentConfigs() async {
@@ -217,25 +248,42 @@ class _MyHomePageState extends State<MyHomePage> {
     http.Response response =
         await http.get('http://10.0.2.2:3000/get_flutter_configs');
     print(response.statusCode);
-    var _get_result = jsonDecode(response.body);
-    print(_get_result);
-    setState(() {
-      isMotionDetectionEnabled = _get_result['detectingMotion'];
-      if (isMotionDetectionEnabled) {
-        motionText="Enabled";
-        motionColor = Colors.greenAccent;
-      }
-      isAlexaEnabled = _get_result['alexaAllowed'];
-      if (isAlexaEnabled) {
-        alexaColor = Colors.greenAccent;
-        alexaText = "Enabled";
-      }
-      isAngerDetectionEnabled = _get_result['detectingAnger'];
-      if (isAngerDetectionEnabled) {
-        angerText = "Enabled";
-        angerColor = Colors.greenAccent;
-      }
-    });
+    if (response.statusCode != 200){
+      _showErrorToast();
+    }
+    else {
+      var _get_result = jsonDecode(response.body);
+      print(_get_result);
+      setState(() {
+        isMotionDetectionEnabled = _get_result['detectingMotion'];
+        if (isMotionDetectionEnabled) {
+          motionText = "Enabled";
+          motionColor = Colors.greenAccent;
+        }
+        isAlexaEnabled = _get_result['alexaAllowed'];
+        if (isAlexaEnabled) {
+          alexaColor = Colors.greenAccent;
+          alexaText = "Enabled";
+        }
+        isAngerDetectionEnabled = _get_result['detectingAnger'];
+        if (isAngerDetectionEnabled) {
+          angerText = "Enabled";
+          angerColor = Colors.greenAccent;
+        }
+      });
+    }
+  }
+
+  void _showErrorToast() {
+    Fluttertoast.showToast(
+        msg: "Couldn't connect to server",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.greenAccent,
+        textColor: Colors.black87,
+        fontSize: 16.0
+    );
   }
 
   @override

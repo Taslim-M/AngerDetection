@@ -137,7 +137,7 @@ app.get("/get_flutter_configs", function (req, res) {
         detectingAnger: isDetectingAnger,
     };
     console.log("Sending: "+JSON.stringify(toSend));
-    res.send(toSend);
+    res.status(200).send(toSend);
 });
 
 
