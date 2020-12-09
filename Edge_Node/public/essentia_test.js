@@ -131,19 +131,17 @@ function cutOffSpecAndOutput() {
 
         var mqttEmotion = "Anger";
 
-        if (emotionPredicted == "OTH"){
-            mqttEmotion = "Other";
+        if (emotionPredicted != "OTH"){
+            var mqttObject = {
+                device_id: DEVICE_ID,
+                incident_time: Date.now(),
+                incident_type: mqttEmotion
+            };
+    
+            message = new Paho.MQTT.Message(JSON.stringify(mqttObject));
+            message.destinationName = "incidents/"+DEVICE_ID;
+            client.send(message);
         }
-
-        var mqttObject = {
-            device_id: DEVICE_ID,
-            incident_time: Date.now(),
-            incident_type: mqttEmotion
-        };
-
-        message = new Paho.MQTT.Message(JSON.stringify(mqttObject));
-        message.destinationName = "incidents/"+DEVICE_ID;
-        client.send(message);
     });
 
 
@@ -207,7 +205,7 @@ $(document).ready(function () {
 
 //MQTT
 
-var wsbroker = "localhost"; //mqtt websocket enabled broker
+var wsbroker = "192.168.0.100"; //mqtt websocket enabled broker
 var wsport = 9001 // port for above
 
 // create client using the Paho library
