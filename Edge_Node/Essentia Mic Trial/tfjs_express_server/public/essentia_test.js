@@ -116,13 +116,9 @@ function startMicRecordStream(
 function cutOffSpecAndOutput() {
     console.log("Stopped recording ...");
     //make a deep copy
-    console.log("Full spec");
-    console.log(spectrogram);
-
     // NOW PERFORM INFERENCE
     let spec_tens = tf.tensor(spectrogram);
     model.then((x) => {
-        console.log("shape: "+spec_tens.print())
         spec_tens = spec_tens.reshape([1, 128, 151, 1]);
         let prediction = x.predict(spec_tens);
         console.log("Predicted array...");
@@ -133,13 +129,19 @@ function cutOffSpecAndOutput() {
         //reset spectrogram
         spectrogram = [];
 
-        var mqttMessage = "Anger";
+        var mqttEmotion = "Anger";
 
         if (emotionPredicted == "OTH"){
-            mqttMessage = "Other";
+            mqttEmotion = "Other";
         }
-        
-        message = new Paho.MQTT.Message(mqttMessage);
+
+        var mqttObject = {
+            device_id: DEVICE_ID,
+            incident_time: Date.now(),
+            incident_type: mqttEmotion
+        };
+
+        message = new Paho.MQTT.Message(JSON.stringify(mqttObject));
         message.destinationName = "incidents/"+DEVICE_ID;
         client.send(message);
     });
@@ -159,18 +161,11 @@ function onRecordEssentiaFeatureExtractor(event) {
         essentiaExtractor.profile.MelBands.numberBands = melNumBands;
         // compute hpcp for overlapping frames of audio
         let spectrum = essentiaExtractor.melSpectrumExtractor(audioBuffer, audioCtx.sampleRate);
-        let plot_spec = []
         spectrogram.push(spectrum);
-        plot_spec.push(spectrum);
 
-        // here we call the plotting function to display realtime feature extraction results
-        plotSpectrogram.create(
-            plot_spec,
-            "Log-scaled MelSpectrogram",
-            bufferSize,
-            audioCtx.sampleRate,
-            hopSize
-        );
+        if (spectrogram.length % 50 == 0){
+            console.log("Reached: "+spectrogram.length);
+        }
     }
     else if (spectrogram.length >= SPECTROGRAM_WIDTH) {
         console.log(spectrogram.length);
@@ -186,18 +181,6 @@ $(document).ready(function () {
         let recording = $(this).hasClass("recording");
         if (!recording) {
             $(this).prop("disabled", true);
-
-            // create essentia plot instance
-            plotSpectrogram = new EssentiaPlot.PlotHeatmap(
-                Plotly,
-                plotContainerId,
-                'spectrogram',
-                EssentiaPlot.LayoutSpectrogramPlot // layout settings
-            );
-
-            plotSpectrogram.plotLayout.yaxis.range = [0, melNumBands];
-            plotSpectrogram.plotLayout.yaxis.autorange = false;
-
             // loads the WASM backend and runs the feature extraction
             EssentiaWASM().then(function (essentiaWASM) {
                 if (!isEssentiaInstance) {
@@ -211,11 +194,7 @@ $(document).ready(function () {
                     onRecordEssentiaFeatureExtractor, // essentia.js feature extractor callback function
                     function () {
                         // called when the promise fulfilled
-                        $("#recordButton").addClass("recording");
-                        $("#recordButton").html(
-                            'Stop &nbsp;&nbsp;<i class="stop icon"></i>'
-                        );
-                        $("#recordButton").prop("disabled", false);
+                        $("#recordButton").prop("disabled", true);
                     }
                 );
             });
